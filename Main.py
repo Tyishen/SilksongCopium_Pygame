@@ -2,8 +2,6 @@ import pygame
 import sys
 
 
-#I'm making changes lolllll
-
 pygame.init()
 screen = pygame.display.set_mode((1280, 960))
 
@@ -12,13 +10,16 @@ dt = 0
 
 playerCoords = pygame.Vector2(int(screen.get_width() / 2), int(screen.get_height() / 2))
 
+debugBlock = pygame.image.load("pixil-frame-0.png").convert_alpha()
+
 running = True
 while running:
     
     screen.fill("white")
     
     pygame.draw.circle(screen, "blue", playerCoords, 10)
-    
+    screen.blit(debugBlock, (0, 0))
+
     keyDown = pygame.key.get_pressed()
     
     if keyDown[pygame.K_w]:
