@@ -2,7 +2,7 @@ import pygame
 import sys
 
 
-#I'm making changes lol
+#I'm making changes lolllll
 
 pygame.init()
 screen = pygame.display.set_mode((1280, 960))
