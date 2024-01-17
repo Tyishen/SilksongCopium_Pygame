@@ -1,6 +1,9 @@
 import pygame
 import sys
 
+windowHeight = 900
+windowWidth = 900
+
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
 
@@ -10,9 +13,8 @@ def drawWorld():
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
     
 
-
 pygame.init()
-outputScreen = pygame.display.set_mode((900, 900))
+outputScreen = pygame.display.set_mode((windowWidth, windowHeight))
 gameDisplay = pygame.Surface((300, 300))
 
 clock = pygame.time.Clock()
@@ -22,6 +24,21 @@ dt = 0
 playerCoords = pygame.Vector2(int(gameDisplay.get_width() / 2), int(gameDisplay.get_height() / 2))
 debugBlock = pygame.image.load("pixil-frame-0.png").convert_alpha()
 
+mapFile = open("map.txt", "r")
+mapData = []
+
+i = 0
+for row in mapFile.read().split("\n"):
+    rowArray = []
+    print(row)
+    for char in row:
+        rowArray.append(int(char))
+
+    mapData.insert(i, rowArray)
+    i+=1
+print(mapData)
+
+enumerate()
 
 running = True
 while running:
@@ -52,9 +69,9 @@ while running:
 pygame.quit()
 sys.exit()
 
-def carIso(cartVect):
+def worldViewport(cartVect):
+    pass
     
-    isoVect
 
-def isoCar(x, y):
+def ViewportWorld(x, y):
     pass
