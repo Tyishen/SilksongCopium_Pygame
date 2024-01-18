@@ -9,29 +9,30 @@ unitHeight = 10
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
 
-    # gameDisplay.blit(debugBlock, (0, 0))
-        # yoinking code to see how it works right here
     for y, row in enumerate(mapData):
         for x, tile in enumerate(row):
             if tile == True:
-                gameDisplay.blit(debugBlock, worldViewport(pygame.Vector2(x, y), 24, 24))
+                gameDisplay.blit(debugBlock, worldViewport(pygame.Vector2(x, y), debugBlock))
 
     pygame.draw.circle(gameDisplay, "blue", playerCoords, 10)
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
     
-def worldViewport(inputCoords, spriteW, spriteH):
+def worldViewport(inputCoords, inputObj):
+    spriteW = inputObj.get_width()
+    spriteH = inputObj.get_height()
+
     iChat = pygame.Vector2(0.5 * spriteW, 0.25 * spriteH)
     jChat = pygame.Vector2(-0.5 * spriteW, 0.25 * spriteH)
 
     isometricCoordinates = (iChat * inputCoords.x) + (jChat * inputCoords.y)
     return isometricCoordinates
     
-    
-
 def ViewportWorld(inputCoords, spriteW, spriteH):
     iChat = pygame.Vector2(0.5 * spriteW, 0.25 * spriteH)
     jChat = pygame.Vector2(-0.5 * spriteW, 0.25 * spriteH)
+
+
 
 pygame.init()
 outputScreen = pygame.display.set_mode((windowWidth, windowHeight))
@@ -42,7 +43,7 @@ dt = 0
 
 # Objects
 playerCoords = pygame.Vector2(int(gameDisplay.get_width() / 2), int(gameDisplay.get_height() / 2))
-debugBlock = pygame.image.load("pixil-frame-0.png").convert_alpha()
+debugBlock = pygame.image.load("pixil-frame-1.png").convert_alpha()
 
 mapFile = open("map.txt", "r")
 mapData = []
@@ -55,8 +56,7 @@ for row in mapFile.read().split("\n"):
         rowArray.append(int(char))
 
     mapData.insert(i, rowArray)
-    i+=1
-print(mapData)
+    i += 1
 
 
 
