@@ -4,14 +4,34 @@ import sys
 windowHeight = 900
 windowWidth = 900
 
+unitHeight = 10
+
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
 
-    gameDisplay.blit(debugBlock, (0, 0))
+    # gameDisplay.blit(debugBlock, (0, 0))
+        # yoinking code to see how it works right here
+    for y, row in enumerate(mapData):
+        for x, tile in enumerate(row):
+            if tile == True:
+                gameDisplay.blit(debugBlock, worldViewport(pygame.Vector2(x, y), 24, 24))
+
     pygame.draw.circle(gameDisplay, "blue", playerCoords, 10)
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
     
+def worldViewport(inputCoords, spriteW, spriteH):
+    iChat = pygame.Vector2(0.5 * spriteW, 0.25 * spriteH)
+    jChat = pygame.Vector2(-0.5 * spriteW, 0.25 * spriteH)
+
+    isometricCoordinates = (iChat * inputCoords.x) + (jChat * inputCoords.y)
+    return isometricCoordinates
+    
+    
+
+def ViewportWorld(inputCoords, spriteW, spriteH):
+    iChat = pygame.Vector2(0.5 * spriteW, 0.25 * spriteH)
+    jChat = pygame.Vector2(-0.5 * spriteW, 0.25 * spriteH)
 
 pygame.init()
 outputScreen = pygame.display.set_mode((windowWidth, windowHeight))
@@ -38,7 +58,7 @@ for row in mapFile.read().split("\n"):
     i+=1
 print(mapData)
 
-enumerate()
+
 
 running = True
 while running:
@@ -53,8 +73,6 @@ while running:
     if keyDown[pygame.K_d]:
         playerCoords.x += 300 * dt
     
-    
-    
     dt = clock.tick(60)/1000
 
     # flip() the display to put your work on screen
@@ -63,15 +81,8 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            print("AAA")
             running = False
     
 pygame.quit()
 sys.exit()
 
-def worldViewport(cartVect):
-    pass
-    
-
-def ViewportWorld(x, y):
-    pass
