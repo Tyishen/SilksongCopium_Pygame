@@ -5,6 +5,9 @@ import numpy
 windowHeight = 900
 windowWidth = 900
 
+tileX = 32
+tileY = 32
+
 unitHeight = 10
 
 viewTransform = pygame.Vector3(10, 0, 0);
@@ -15,37 +18,31 @@ def drawWorld():
     for y, row in enumerate(mapData):
         for x, tile in enumerate(row):
             if tile == True:
-                gameDisplay.blit(debugBlock, objectViewTransform(pygame.Vector3(x, y, 0), debugBlock))
+                gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y, 0)))
 
-    pygame.draw.circle(gameDisplay, "blue", worldViewport(playerCoords, pygame.Vector3(20, 20, 0)), 10)
+    pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
-    
-def objectViewTransform(inputCoords, inputObj):
-    return worldViewport(inputCoords, pygame.Vector2(inputObj.get_width(), inputObj.get_height()))
 
-def worldViewport(inputCoords, scaling):
+def worldScreen(inputCoords):
     offsetCoords = inputCoords + viewTransform
 
-    spriteW = scaling.x
-    spriteH = scaling.y
-
-    iChat = pygame.Vector2(0.5 * spriteW, 0.25 * spriteH)
-    jChat = pygame.Vector2(-0.5 * spriteW, 0.25 * spriteH)
+    iChat = pygame.Vector2(0.5 * tileX, 0.25 * tileY)
+    jChat = pygame.Vector2(-0.5 * tileX, 0.25 * tileY)
 
     isometricCoordinates = pygame.Vector2(iChat * offsetCoords.x) + (jChat * offsetCoords.y)
     # isometricCoordinates.y += 32 * inputCoords.z
     return isometricCoordinates
     
-def viewportWorld(inputCoords):
+def screenWorld(inputCoords):
 
-    inputCoords
+    
 
-    iChat = pygame.Vector2(0.5 * 32, 0.25 * 32)
-    jChat = pygame.Vector2(-0.5 * 32, 0.25 * 32)
+    iChat = pygame.Vector2(0.5 * tileX, 0.25 * tileY)
+    jChat = pygame.Vector2(-0.5 * tileX, 0.25 * tileY)
 
-    returnCoords = (pygame.Vector2(jChat.y, -(iChat.y)) * pygame.Vector2(-(jChat.x), iChat.x))
-    return returnCoords
+    returnCoords = pygame.Vector2(pygame.Vector2(jChat.y, -(iChat.y)) * inputCoords.x, pygame.Vector2(-(jChat.x), iChat.x) * inputCoords.y)
+    return pygame.Vector3(returnCoords.x, returnCoords.y, 0)
 
 # 1 / ((iChat.x * jChat.y) - (jChat.x * iChat.y))) this is the determinant??
 
@@ -98,13 +95,13 @@ while running:
         playerCoords.x += 2 * dt
     
     if keyDown[pygame.K_RIGHT]:
-        viewTransform.x += 5 * dt
+        viewTransform -= screenWorld(5 * dt)
     if keyDown[pygame.K_LEFT]:
-        viewTransform.x -= 5 * dt
+        viewTransform += screenWorld(5 * dt)
     if keyDown[pygame.K_UP]:
-        viewTransform.y += 5 * dt
+        viewTransform += screenWorld(5 * dt)
     if keyDown[pygame.K_DOWN]:
-        viewTransform.y -= 5 * dt
+        viewTransform -= screenWorld(5 * dt)
         
     dt = clock.tick(60)/1000
 
