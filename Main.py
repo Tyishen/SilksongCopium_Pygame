@@ -5,12 +5,31 @@ import numpy
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
 
+    playerTile = tileCoords(playerCoords)
+    sortingList = []
+
     for y, row in enumerate(mapData):
         for x, tile in enumerate(row):
             if tile == True:
-                gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y + 1, 0)))
+                sortingList.append(pygame.Vector3(x, y + 1, 0))
+                
+                # gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y + 1, 0)))
 
+    print(sortingList)
+
+    for i in range(len(sortingList)):
+       if sortingList[i].x < playerTile.x:
+           if sortingList[i].y < playerTile.y:
+               gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
+               sortingList.pop(i)
+           
+    #Bliting le player
     pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
+
+    for i in range(len(sortingList)):
+        gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
+
+    
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
 
@@ -41,8 +60,6 @@ def playerPhysicx():
     gravity = 4.9
 
     tile = tileCoords(playerCoords)
-
-    print("Player block pos" + str(tile) + " pos: " + str(playerCoords))
     #Apply gravity in all cases, but don't go through the floor
     if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
         playerCoords.z -= gravity * dt
