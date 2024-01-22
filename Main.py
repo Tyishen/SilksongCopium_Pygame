@@ -2,23 +2,13 @@ import pygame
 import sys
 import numpy
 
-windowHeight = 900
-windowWidth = 900
-
-tileX = 32
-tileY = 32
-
-unitHeight = 10
-
-viewTransform = pygame.Vector3(10, 0, 0);
-
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
 
     for y, row in enumerate(mapData):
         for x, tile in enumerate(row):
             if tile == True:
-                gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y, 0)))
+                gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y + 1, 0)))
 
     pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
 
@@ -31,7 +21,7 @@ def worldScreen(inputCoords):
     jChat = pygame.Vector2(-0.5 * tileX, 0.25 * tileY)
 
     isometricCoordinates = pygame.Vector2(iChat * offsetCoords.x) + (jChat * offsetCoords.y)
-    # isometricCoordinates.y += 32 * inputCoords.z
+    isometricCoordinates.y -= tileY * inputCoords.z
     return isometricCoordinates
     
 def screenWorld(inputCoords):
@@ -45,28 +35,38 @@ def screenWorld(inputCoords):
 def tileCoords(inputCoords):
     return pygame.Vector2(numpy.floor(inputCoords.x), numpy.floor(inputCoords.y))
 
-def playerOpticsYay():
-    global playerCoords
+def playerPhysicx():
+    global playerCoords, dt
+
+    gravity = 4.9
 
     tile = tileCoords(playerCoords)
 
-    if mapData[tile.x][tile.y] == 1:
-        return True
+    print("Player block pos" + str(tile) + " pos: " + str(playerCoords))
+    #Apply gravity in all cases, but don't go through the floor
+    if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
+        playerCoords.z -= gravity * dt
     else:
-        return False
-
-# 1 / ((iChat.x * jChat.y) - (jChat.x * iChat.y))) this is the determinant??
-
-# def viewportWorld(inputCoords, spriteW, spriteH):
-#     iChat = pygame.Vector2(0.5 * spriteW, 0.25 * spriteH)
-#     jChat = pygame.Vector2(-0.5 * spriteW, 0.25 * spriteH)
-
-#     returnCoords = (1 / ((iChat.x * jChat.y) - (jChat.x * iChat.y))) * (pygame.Vector2(jChat.y, -(iChat.y)) * pygame.Vector2(-(jChat.x), iChat.x))
-
-
-
+        if mapData[int(tile.x)][int(tile.y)] == 1:
+            if playerCoords.z > 0:
+                playerCoords.z -= gravity * dt
+        else:
+            playerCoords.z -= gravity * dt
 
 pygame.init()
+
+windowHeight = 900
+windowWidth = 900
+
+dt = 0
+
+tileX = 32
+tileY = 32
+
+unitHeight = 10
+
+viewTransform = pygame.Vector3(10, 0, 0);
+
 outputScreen = pygame.display.set_mode((windowWidth, windowHeight))
 gameDisplay = pygame.Surface((300, 300))
 
@@ -74,10 +74,10 @@ clock = pygame.time.Clock()
 dt = 0
 
 # Objects
-playerCoords = pygame.Vector3(0, 0, 0)
+playerCoords = pygame.Vector3(0, 0, 6)
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
 
-mapFile = open("map.txt", "r")
+mapFile = open("solidMap.txt", "r")
 mapData = []
 
 i = 0
@@ -96,15 +96,24 @@ running = True
 while running:
     keyDown = pygame.key.get_pressed()
     
-    if keyDown[pygame.K_w]:
-        playerCoords -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
-    if keyDown[pygame.K_a]:
-        playerCoords -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
-    if keyDown[pygame.K_s]:
-        playerCoords += screenWorld(pygame.Vector3(0, 1 * dt, 0))
-    if keyDown[pygame.K_d]:
-        playerCoords += screenWorld(pygame.Vector3(1 * dt, 0, 0))
+    # if keyDown[pygame.K_w]:
+    #     playerCoords -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
+    # if keyDown[pygame.K_a]:
+    #     playerCoords -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
+    # if keyDown[pygame.K_s]:
+    #     playerCoords += screenWorld(pygame.Vector3(0, 1 * dt, 0))
+    # if keyDown[pygame.K_d]:
+    #     playerCoords += screenWorld(pygame.Vector3(1 * dt, 0, 0))
     
+    if keyDown[pygame.K_w]:
+        playerCoords.y -= 1 * dt
+    if keyDown[pygame.K_a]:
+        playerCoords.x -= 1 * dt
+    if keyDown[pygame.K_s]:
+        playerCoords.y += 1 * dt
+    if keyDown[pygame.K_d]:
+        playerCoords.x += 1 * dt
+
     if keyDown[pygame.K_RIGHT]:
         viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
     if keyDown[pygame.K_LEFT]:
@@ -115,6 +124,8 @@ while running:
         viewTransform -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
         
     dt = clock.tick(60)/1000
+
+    playerPhysicx()
 
     # flip() the display to put your work on screen
     drawWorld() 
