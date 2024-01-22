@@ -36,13 +36,24 @@ def worldScreen(inputCoords):
     
 def screenWorld(inputCoords):
 
-    
-
     iChat = pygame.Vector2(0.5 * tileX, 0.25 * tileY)
     jChat = pygame.Vector2(-0.5 * tileX, 0.25 * tileY)
 
-    returnCoords = pygame.Vector2(pygame.Vector2(jChat.y, -(iChat.y)) * inputCoords.x, pygame.Vector2(-(jChat.x), iChat.x) * inputCoords.y)
+    returnCoords = pygame.Vector2(jChat.y, -(iChat.y)) * inputCoords.x + pygame.Vector2(-(jChat.x), iChat.x) * inputCoords.y
     return pygame.Vector3(returnCoords.x, returnCoords.y, 0)
+
+def tileCoords(inputCoords):
+    return pygame.Vector2(numpy.floor(inputCoords.x), numpy.floor(inputCoords.y))
+
+def playerOpticsYay():
+    global playerCoords
+
+    tile = tileCoords(playerCoords)
+
+    if mapData[tile.x][tile.y] == 1:
+        return True
+    else:
+        return False
 
 # 1 / ((iChat.x * jChat.y) - (jChat.x * iChat.y))) this is the determinant??
 
@@ -86,22 +97,22 @@ while running:
     keyDown = pygame.key.get_pressed()
     
     if keyDown[pygame.K_w]:
-        playerCoords.y -= 2 * dt
+        playerCoords -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
     if keyDown[pygame.K_a]:
-        playerCoords.x -= 2 * dt
+        playerCoords -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
     if keyDown[pygame.K_s]:
-        playerCoords.y += 2 * dt
+        playerCoords += screenWorld(pygame.Vector3(0, 1 * dt, 0))
     if keyDown[pygame.K_d]:
-        playerCoords.x += 2 * dt
+        playerCoords += screenWorld(pygame.Vector3(1 * dt, 0, 0))
     
     if keyDown[pygame.K_RIGHT]:
-        viewTransform -= screenWorld(5 * dt)
+        viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
     if keyDown[pygame.K_LEFT]:
-        viewTransform += screenWorld(5 * dt)
+        viewTransform += screenWorld(pygame.Vector3(1 * dt, 0, 0))
     if keyDown[pygame.K_UP]:
-        viewTransform += screenWorld(5 * dt)
+        viewTransform += screenWorld(pygame.Vector3(0, 1 * dt, 0))
     if keyDown[pygame.K_DOWN]:
-        viewTransform -= screenWorld(5 * dt)
+        viewTransform -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
         
     dt = clock.tick(60)/1000
 
