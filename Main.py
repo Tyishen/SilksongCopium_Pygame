@@ -5,8 +5,12 @@ import numpy
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
 
-    playerTile = tileCoords(playerCoords)
+    offsetVector = pygame.Vector2.normalize(pygame.Vector2(0.5, -0.5)) * 0.5
+
+    playerTile = tileCoords(playerCoords - pygame.Vector3(offsetVector.x, offsetVector.y, 0))
     sortingList = []
+
+    tempList = []
 
     for y, row in enumerate(mapData):
         for x, tile in enumerate(row):
@@ -15,23 +19,28 @@ def drawWorld():
                 
                 # gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y + 1, 0)))
 
-    print(sortingList)
-
     for i in range(len(sortingList)):
-       if sortingList[i].x < playerTile.x:
-           if sortingList[i].y < playerTile.y:
-               gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
-               sortingList.pop(i)
-           
+
+        if sortingList[i].x <= playerTile.x + 1 and sortingList[i].y <= playerTile.y + 1:
+            BlockCheck1 = sortingList[i].x == playerTile.x + 1 and sortingList[i].y == playerTile.y + 1
+            
+            if playerCoords.z < 0 or BlockCheck1:
+                tempList.append(sortingList[i])
+            gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
+        else:
+            tempList.append(sortingList[i])
+
+    sortingList = tempList
+
     #Bliting le player
     pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
 
-    for i in range(len(sortingList)):
-        gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
-
-    
+    for i in range(len(tempList)):
+        gameDisplay.blit(debugBlock, worldScreen(tempList[i]))
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
+
+# Conversions from screen space to world space and vice versa
 
 def worldScreen(inputCoords):
     offsetCoords = inputCoords + viewTransform
@@ -60,14 +69,17 @@ def playerPhysicx():
     gravity = 4.9
 
     tile = tileCoords(playerCoords)
-    #Apply gravity in all cases, but don't go through the floor
+
     if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
         playerCoords.z -= gravity * dt
     else:
-        if mapData[int(tile.x)][int(tile.y)] == 1:
-            if playerCoords.z > 0:
+        if mapData[int(tile.y)][int(tile.x)] == 1:
+            if playerCoords.z > 0.0001 or playerCoords.z < -0.5: # hackerman
                 playerCoords.z -= gravity * dt
+            else:
+                playerCoords.z = 0.000001
         else:
+            
             playerCoords.z -= gravity * dt
 
 pygame.init()
@@ -94,7 +106,7 @@ dt = 0
 playerCoords = pygame.Vector3(0, 0, 6)
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
 
-mapFile = open("solidMap.txt", "r")
+mapFile = open("map.txt", "r")
 mapData = []
 
 i = 0
@@ -123,13 +135,13 @@ while running:
     #     playerCoords += screenWorld(pygame.Vector3(1 * dt, 0, 0))
     
     if keyDown[pygame.K_w]:
-        playerCoords.y -= 1 * dt
+        playerCoords.y -= 2 * dt
     if keyDown[pygame.K_a]:
-        playerCoords.x -= 1 * dt
+        playerCoords.x -= 2 * dt
     if keyDown[pygame.K_s]:
-        playerCoords.y += 1 * dt
+        playerCoords.y += 2 * dt
     if keyDown[pygame.K_d]:
-        playerCoords.x += 1 * dt
+        playerCoords.x += 2 * dt
 
     if keyDown[pygame.K_RIGHT]:
         viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
