@@ -24,7 +24,7 @@ def drawWorld():
         if sortingList[i].x <= playerTile.x + 1 and sortingList[i].y <= playerTile.y + 1:
             BlockCheck1 = sortingList[i].x == playerTile.x + 1 and sortingList[i].y == playerTile.y + 1
             
-            if playerCoords.z < 0 or BlockCheck1:
+            if playerCoords.z < 0 and BlockCheck1:
                 tempList.append(sortingList[i])
             gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
         else:
@@ -34,6 +34,7 @@ def drawWorld():
 
     #Bliting le player
     pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
+    gameDisplay.blit(cornet, worldScreen(playerCoords) - pygame.Vector2(10, 10))
 
     for i in range(len(tempList)):
         gameDisplay.blit(debugBlock, worldScreen(tempList[i]))
@@ -82,7 +83,13 @@ def playerPhysicx():
             
             playerCoords.z -= gravity * dt
 
+def kornetFrame():
+    pygame.time.get_ticks
+    clock.get_time % 0.5
+
+    return
 pygame.init()
+pygame.time.clock()
 
 windowHeight = 900
 windowWidth = 900
@@ -105,6 +112,10 @@ dt = 0
 # Objects
 playerCoords = pygame.Vector3(0, 0, 6)
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
+cornet = 
+cornet0 = pygame.image.load("cornet.png").convert_alpha()
+cornet1 = pygame.image.load("cornet.png").convert_alpha()
+cornet2 = pygame.image.load("cornet.png").convert_alpha()
 
 mapFile = open("map.txt", "r")
 mapData = []
