@@ -27,7 +27,7 @@ def drawWorld():
             
             if playerCoords.z < 0 and BlockCheck1:
                 tempList.append(sortingList[i])
-            gameDisplay.blit(debugBlock, worldScreen(sortingList[i]))
+            gameDisplay.blit(blockChoice(), worldScreen(sortingList[i]))
         else:
             tempList.append(sortingList[i])
 
@@ -39,7 +39,7 @@ def drawWorld():
     
 
     for i in range(len(tempList)):
-        gameDisplay.blit(debugBlock, worldScreen(tempList[i]))
+        gameDisplay.blit(blockChoice(), worldScreen(tempList[i]))
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
 
@@ -107,8 +107,15 @@ def kornetFrame():
 
     return cornet
 
+def blockChoice():
+    tileBlock = random.choice([mossCobble, mossCobble2, mossCobble3, cobble])
+
+    return tileBlock
+
 pygame.init()
 pygame.time.Clock()
+
+# Begin the variables!
 
 windowHeight = 900
 windowWidth = 900
@@ -133,6 +140,13 @@ dt = 0
 playerCoords = pygame.Vector3(0, 0, 3)
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
 
+mossCobble = pygame.image.load("mossCobble.png").convert_alpha()
+mossCobble2 = pygame.image.load("mossCobble2.png").convert_alpha()
+mossCobble3 = pygame.image.load("mossCobble3.png").convert_alpha()
+cobble = pygame.image.load("cobble.png").convert_alpha()
+
+# There's probably a faster way of getting all these.. oh well
+
 cornetIDLE = pygame.image.load("Cornet Idle.png").convert_alpha()
 cornetFALL = pygame.image.load("KornetFall.png").convert_alpha()
 cornetATTACK = pygame.image.load("Kornet Walk 2.png").convert_alpha()
@@ -150,7 +164,7 @@ lastUpd = pygame.time.get_ticks()
 animationTick = 200
 currentTime = pygame.time.get_ticks()
 
-mapFile = open("map.txt", "r")
+mapFile = open("solidMap.txt", "r")
 mapData = []
 
 i = 0
@@ -166,28 +180,33 @@ for row in mapFile.read().split("\n"):
 running = True
 while running:
     keyDown = pygame.key.get_pressed()
-    
-    # if keyDown[pygame.K_w]:
-    #     playerCoords -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
-    # if keyDown[pygame.K_a]:
-    #     playerCoords -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
-    # if keyDown[pygame.K_s]:
-    #     playerCoords += screenWorld(pygame.Vector3(0, 1 * dt, 0))
-    # if keyDown[pygame.K_d]:
-    #     playerCoords += screenWorld(pygame.Vector3(1 * dt, 0, 0))
-    
+
+    # This is the movement code for non-isometric movement
     if keyDown[pygame.K_w]:
-        playerCoords.y -= 2 * dt
-        facing = "right"
+        playerCoords -= screenWorld(pygame.Vector3(0, 0.2 * dt, 0))
     if keyDown[pygame.K_a]:
-        playerCoords.x -= 2 * dt
+        playerCoords -= screenWorld(pygame.Vector3(0.2 * dt, 0, 0))
         facing = "left"
     if keyDown[pygame.K_s]:
-        playerCoords.y += 2 * dt
-        facing = "left"
+        playerCoords += screenWorld(pygame.Vector3(0, 0.2 * dt, 0))
     if keyDown[pygame.K_d]:
-        playerCoords.x += 2 * dt
+        playerCoords += screenWorld(pygame.Vector3(0.2 * dt, 0, 0))
         facing = "right"
+    
+    # This is the movement code for movement using the ingame grid system (isometric)
+
+    # if keyDown[pygame.K_w]:
+    #     playerCoords.y -= 2 * dt
+    #     facing = "right"
+    # if keyDown[pygame.K_a]:
+    #     playerCoords.x -= 2 * dt
+    #     facing = "left"
+    # if keyDown[pygame.K_s]:
+    #     playerCoords.y += 2 * dt
+    #     facing = "left"
+    # if keyDown[pygame.K_d]:
+    #     playerCoords.x += 2 * dt
+    #     facing = "right"
 
     if keyDown[pygame.K_RIGHT]:
         viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
