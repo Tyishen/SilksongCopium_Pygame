@@ -1,9 +1,12 @@
+
 import pygame
 import sys
 import numpy
+import random
 
 def drawWorld():
     gameDisplay.fill((255, 255, 255))
+    playerDisplay.fill((255, 255, 255))
 
     offsetVector = pygame.Vector2.normalize(pygame.Vector2(0.5, -0.5)) * 0.5
 
@@ -16,8 +19,6 @@ def drawWorld():
         for x, tile in enumerate(row):
             if tile == True:
                 sortingList.append(pygame.Vector3(x, y + 1, 0))
-                
-                # gameDisplay.blit(debugBlock, worldScreen(pygame.Vector3(x, y + 1, 0)))
 
     for i in range(len(sortingList)):
 
@@ -33,8 +34,9 @@ def drawWorld():
     sortingList = tempList
 
     #Bliting le player
-    pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
-    gameDisplay.blit(cornet, worldScreen(playerCoords) - pygame.Vector2(10, 10))
+    # pygame.draw.circle(gameDisplay, "blue", worldScreen(playerCoords), 10)
+    gameDisplay.blit(kornetFrame(), worldScreen(playerCoords) - pygame.Vector2(10, 10))
+    
 
     for i in range(len(tempList)):
         gameDisplay.blit(debugBlock, worldScreen(tempList[i]))
@@ -84,12 +86,29 @@ def playerPhysicx():
             playerCoords.z -= gravity * dt
 
 def kornetFrame():
-    pygame.time.get_ticks
-    clock.get_time % 0.5
+    global currentTime, frame, lastUpd
+    cornet = cornetIDLE
+ 
+    if True in keyDown:
+        currentTime = pygame.time.get_ticks()
+        if currentTime - lastUpd >= animationTick:
+            frame += 1
+            lastUpd = currentTime
+            if frame >= len(cornetAni):
+                frame = 0
 
-    return
+        cornet = cornetAni[frame]
+
+    if playerCoords.z <= -0.5:
+        cornet = cornetFALL
+
+    if facing == "right":
+        cornet = pygame.transform.flip(cornet, True, False)
+
+    return cornet
+
 pygame.init()
-pygame.time.clock()
+pygame.time.Clock()
 
 windowHeight = 900
 windowWidth = 900
@@ -105,17 +124,31 @@ viewTransform = pygame.Vector3(10, 0, 0);
 
 outputScreen = pygame.display.set_mode((windowWidth, windowHeight))
 gameDisplay = pygame.Surface((300, 300))
+playerDisplay = pygame.Surface((300, 230))
 
 clock = pygame.time.Clock()
 dt = 0
 
 # Objects
-playerCoords = pygame.Vector3(0, 0, 6)
+playerCoords = pygame.Vector3(0, 0, 3)
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
-cornet = 
-cornet0 = pygame.image.load("cornet.png").convert_alpha()
-cornet1 = pygame.image.load("cornet.png").convert_alpha()
-cornet2 = pygame.image.load("cornet.png").convert_alpha()
+
+cornetIDLE = pygame.image.load("Cornet Idle.png").convert_alpha()
+cornetFALL = pygame.image.load("KornetFall.png").convert_alpha()
+cornetATTACK = pygame.image.load("Kornet Walk 2.png").convert_alpha()
+
+cornet1 = pygame.image.load("cornet1.png").convert_alpha()
+cornet2 = pygame.image.load("Kornet Walk 1.png").convert_alpha()
+cornet3 = pygame.image.load("Kornet Walk 3.png").convert_alpha()
+
+cornetAni = [cornet1, cornet2, cornet3]
+
+facing = "left"
+
+frame = 0
+lastUpd = pygame.time.get_ticks()
+animationTick = 200
+currentTime = pygame.time.get_ticks()
 
 mapFile = open("map.txt", "r")
 mapData = []
@@ -129,8 +162,6 @@ for row in mapFile.read().split("\n"):
 
     mapData.insert(i, rowArray)
     i += 1
-
-
 
 running = True
 while running:
@@ -147,12 +178,16 @@ while running:
     
     if keyDown[pygame.K_w]:
         playerCoords.y -= 2 * dt
+        facing = "right"
     if keyDown[pygame.K_a]:
         playerCoords.x -= 2 * dt
+        facing = "left"
     if keyDown[pygame.K_s]:
         playerCoords.y += 2 * dt
+        facing = "left"
     if keyDown[pygame.K_d]:
         playerCoords.x += 2 * dt
+        facing = "right"
 
     if keyDown[pygame.K_RIGHT]:
         viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
