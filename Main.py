@@ -5,14 +5,14 @@ import numpy
 import random
 
 def drawWorld():
-    global blockTileList
+    global blockTileList, kornet
 
     gameDisplay.fill((255, 255, 255))
     playerDisplay.fill((255, 255, 255))
 
     offsetVector = pygame.Vector2.normalize(pygame.Vector2(0.5, -0.5)) * 0.5
 
-    playerTile = tileCoords(playerCoords - pygame.Vector3(offsetVector.x, offsetVector.y, 0))
+    playerTile = tileCoords(kornet.coordinates - pygame.Vector3(offsetVector.x, offsetVector.y, 0))
     sortingList = []
 
     tempList = []
@@ -29,7 +29,7 @@ def drawWorld():
         if sortingList[i].x <= playerTile.x + 1 and sortingList[i].y <= playerTile.y + 1:
             BlockCheck1 = sortingList[i].x == playerTile.x + 1 and sortingList[i].y == playerTile.y + 1
             
-            if playerCoords.z < 0 and BlockCheck1:
+            if kornet.coordinates.z < 0 and BlockCheck1:
                 tempList.append(sortingList[i])
                 tempList.append(sortingList[i])
             gameDisplay.blit(tileBlock(sortingList[i]), worldScreen(sortingList[i]))
@@ -40,7 +40,8 @@ def drawWorld():
     sortingList = tempList
 
     #Bliting le player
-    gameDisplay.blit(kornetFrame(), worldScreen(playerCoords) - pygame.Vector2(10, 10))
+    kornet.updateFrame()
+    kornet.draw()
 
     for i in range(len(tempList)):
         gameDisplay.blit(tileBlock(tempList[i]), worldScreen(tempList[i]))
@@ -81,8 +82,10 @@ def screenWorld(inputCoords):
 def tileCoords(inputCoords):
     return pygame.Vector2(numpy.floor(inputCoords.x), numpy.floor(inputCoords.y))
 
+# Player Movement
+
 def playerPhysicx():
-    global playerCoords, dt
+    global playerCoords, dt, cornetYVelo, cornetJump
 
     gravity = 4.9
 
@@ -100,7 +103,7 @@ def playerPhysicx():
             
             playerCoords.z -= gravity * dt
 
-def kornetFrame():
+def kornetFrame(player):
     global currentTime, frame, lastUpd
     cornet = cornetIDLE
  
@@ -114,13 +117,15 @@ def kornetFrame():
 
         cornet = cornetAni[frame]
 
-    if playerCoords.z <= -0.5:
+    if player.coordinates.z <= -0.5:
         cornet = cornetFALL
 
     if facing == "right":
         cornet = pygame.transform.flip(cornet, True, False)
 
     return cornet
+
+# Randomizing the Map Look
 
 def randomizeBocks():
     # tileBlock = random.choice([mossCobble, mossCobble2, mossCobble3, cobble])
@@ -133,6 +138,103 @@ def tileBlock(inputTile):
         if inputTile == blockTileList[i * 2]:
             return blockTileList[(i * 2) + 1]
 
+# Ok we gonna try some object-oriented programming
+class Hornet():
+
+    def __init__(self, coords, speed, up, left, down, right, iso):
+        self.coordinates = coords
+        self.jumping = False
+        self.speed = speed
+        self.pixelSpeed = worldScreen(pygame.Vector3(speed - 1, 0, 0)).length()
+
+        self.facing = "left"
+        self.isoMovement = iso
+        self.frameNum = 0
+        self.frame = cornetIDLE
+        self.frameState = "left"
+        self.lastUpdate = pygame.time.get_ticks()
+
+        self.up = up
+        self.left = left
+        self.down = down
+        self.right = right
+
+    def draw(self):
+        gameDisplay.blit(self.frame, worldScreen(self.coordinates) - pygame.Vector2(10, 10))
+
+    def move(self):
+        global keyDown
+
+        if self.isoMovement == True:
+         # This is the movement code for movement using the ingame grid system (isometric)
+        
+            if keyDown[self.up]:
+                self.coordinates.y -= self.speed * dt
+                self.facing = "right"
+            if keyDown[self.left]:
+                self.coordinates.x -= self.speed * dt
+                self.facing = "left"
+            if keyDown[self.down]:
+                self.coordinates.y += self.speed * dt
+                self.facing = "left"
+            if keyDown[self.right]:
+                self.coordinates.x += self.speed * dt
+                self.facing = "right"
+        else:
+        # This is the movement code for non-isometric movement
+
+            if keyDown[self.up]:
+                self.coordinates -= screenWorld(pygame.Vector3(0, self.pixelSpeed * dt, 0))
+            if keyDown[self.left]:
+                self.coordinates -= screenWorld(pygame.Vector3(self.pixelSpeed * dt, 0, 0))
+                self.facing = "left"
+            if keyDown[self.down]:
+                self.coordinates += screenWorld(pygame.Vector3(0, self.pixelSpeed * dt, 0))
+            if keyDown[self.right]:
+                self.coordinates += screenWorld(pygame.Vector3(self.pixelSpeed * dt, 0, 0))
+                self.facing = "right"
+
+    def physics(self):
+
+        tile = tileCoords(self.coordinates)
+
+        if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
+            self.coordinates.z -= gravity * dt
+        else:
+            if mapData[int(tile.y)][int(tile.x)] == 1:
+                if self.coordinates.z > 0.0001 or self.coordinates.z < -0.5: # hackerman
+                    self.coordinates.z -= gravity * dt
+                else:
+                    self.coordinates.z = 0.000001
+            else:
+                
+                self.coordinates.z -= gravity * dt
+            
+        if self.coordinates.z <= -5:
+            self.coordinates = pygame.Vector3(5, 5, 2)
+
+    def updateFrame(self):
+        global currentTime, animationTick
+        
+        currentTime = pygame.time.get_ticks()
+
+        if keyDown[self.up] or keyDown[self.left] or keyDown[self.down] or keyDown[self.right]:
+            currentTime = pygame.time.get_ticks()
+            if currentTime - self.lastUpdate >= animationTick:
+                self.frameNum += 1
+                self.lastUpdate = currentTime
+                if self.frameNum >= len(cornetAni):
+                    self.frameNum = 0
+                
+                self.frame = cornetAni[self.frameNum]
+        
+        if self.jumping == True:
+            self.frame = cornetFALL
+
+        if self.frameState != self.facing:
+            self.frame = pygame.transform.flip(self.frame, True, False)
+            self.frameState = self.facing
+                    
 pygame.init()
 pygame.time.Clock()
 
@@ -157,11 +259,12 @@ playerDisplay = pygame.Surface((300, 230))
 clock = pygame.time.Clock()
 dt = 0
 
-# Objects
-playerCoords = pygame.Vector3(4.5, 4.5, 3)
+# Objects, moving most of this to class
+# playerCoords = pygame.Vector3(4.5, 4.5, 3)
 isometricMovement = True
 movementSpeed = 3
 pixelMovement = worldScreen(pygame.Vector3(2, 0, 0)).length()
+gravity = 4.9
 
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
 
@@ -205,45 +308,15 @@ for row in mapFile.read().split("\n"):
     mapData.insert(i, rowArray)
     i += 1
 
+kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, True)
+# One player while I figure out how the layering works
+# cornet = Hornet(pygame.Vector3(5, 5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False)
+
 running = True
 while running:
     keyDown = pygame.key.get_pressed()
 
-    if isometricMovement == True:
-            
-    # This is the movement code for movement using the ingame grid system (isometric)
-        
-        if keyDown[pygame.K_w]:
-            playerCoords.y -= movementSpeed * dt
-            facing = "right"
-        if keyDown[pygame.K_a]:
-            playerCoords.x -= movementSpeed * dt
-            facing = "left"
-        if keyDown[pygame.K_s]:
-            playerCoords.y += movementSpeed * dt
-            facing = "left"
-        if keyDown[pygame.K_d]:
-            playerCoords.x += movementSpeed * dt
-            facing = "right"
-        if keyDown[pygame.K_i]:
-            isometricMovement = not(isometricMovement)
-    else:
-    # This is the movement code for non-isometric movement
-
-        if keyDown[pygame.K_w]:
-            playerCoords -= screenWorld(pygame.Vector3(0, pixelMovement * dt, 0))
-        if keyDown[pygame.K_a]:
-            playerCoords -= screenWorld(pygame.Vector3(pixelMovement * dt, 0, 0))
-            facing = "left"
-        if keyDown[pygame.K_s]:
-            playerCoords += screenWorld(pygame.Vector3(0, pixelMovement * dt, 0))
-        if keyDown[pygame.K_d]:
-            playerCoords += screenWorld(pygame.Vector3(pixelMovement * dt, 0, 0))
-            facing = "right"
-        if keyDown[pygame.K_i]:
-            isometricMovement = not(isometricMovement)
-
-
+    kornet.move()
 
     # Original camera movement code, now it's centered on the player
     # if keyDown[pygame.K_RIGHT]:
@@ -255,14 +328,12 @@ while running:
     # if keyDown[pygame.K_DOWN]:
     #     viewTransform -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
         
-    viewTransform = playerCoords
-
-    if playerCoords.z <= -5:
-        playerCoords = pygame.Vector3(5, 5, 2)
+    viewTransform = kornet.coordinates
 
     dt = clock.tick(60)/1000
 
-    playerPhysicx()
+    kornet.physics()
+    #playerPhysicx()
 
     # flip() the display to put your work on screen
     drawWorld() 
