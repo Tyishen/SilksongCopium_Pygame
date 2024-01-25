@@ -50,21 +50,32 @@ def drawWorld():
 # Conversions from screen space to world space and vice versa
 
 def worldScreen(inputCoords):
-    offsetCoords = inputCoords + viewTransform
+    offsetCoords = inputCoords - viewTransform  + screenWorld(pygame.Vector2(gameDisplay.get_width() / 2, gameDisplay.get_height() / 2))
+
+    # print(pygame.Vector2(gameDisplay.get_width(), gameDisplay.get_height()))
+    # print(screenWorld(pygame.Vector2(gameDisplay.get_width(), gameDisplay.get_height())))
 
     iChat = pygame.Vector2(0.5 * tileX, 0.25 * tileY)
     jChat = pygame.Vector2(-0.5 * tileX, 0.25 * tileY)
 
     isometricCoordinates = pygame.Vector2(iChat * offsetCoords.x) + (jChat * offsetCoords.y)
     isometricCoordinates.y -= tileY * inputCoords.z
-    return isometricCoordinates
-    
-def screenWorld(inputCoords):
 
+    return isometricCoordinates
+
+def screenWorld(inputCoords):
     iChat = pygame.Vector2(0.5 * tileX, 0.25 * tileY)
     jChat = pygame.Vector2(-0.5 * tileX, 0.25 * tileY)
 
-    returnCoords = pygame.Vector2(jChat.y, -(iChat.y)) * inputCoords.x + pygame.Vector2(-(jChat.x), iChat.x) * inputCoords.y
+    iChat_Inv = pygame.Vector2(jChat.y, -(iChat.y))
+    jChat_Inv = pygame.Vector2(-(jChat.x), iChat.x)
+                               
+
+    determinant = (iChat_Inv.x*jChat_Inv.y) - (iChat_Inv.y*jChat_Inv.x)
+    iChat_Inv /= determinant
+    jChat_Inv /= determinant
+
+    returnCoords = iChat_Inv * inputCoords.x + jChat_Inv * inputCoords.y
     return pygame.Vector3(returnCoords.x, returnCoords.y, 0)
 
 def tileCoords(inputCoords):
@@ -147,7 +158,11 @@ clock = pygame.time.Clock()
 dt = 0
 
 # Objects
-playerCoords = pygame.Vector3(5, 5, 3)
+playerCoords = pygame.Vector3(4.5, 4.5, 3)
+isometricMovement = True
+movementSpeed = 3
+pixelMovement = worldScreen(pygame.Vector3(2, 0, 0)).length()
+
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
 
 mossCobble = pygame.image.load("mossCobble.png").convert_alpha()
@@ -158,6 +173,7 @@ cobble = pygame.image.load("cobble.png").convert_alpha()
 blockTileList = []
 
 # There's probably a faster way of getting all these.. oh well
+# Probably should've consolidated this all into a spritesheet but idk how
 
 cornetIDLE = pygame.image.load("Cornet Idle.png").convert_alpha()
 cornetFALL = pygame.image.load("KornetFall.png").convert_alpha()
@@ -173,7 +189,7 @@ facing = "left"
 
 frame = 0
 lastUpd = pygame.time.get_ticks()
-animationTick = 200
+animationTick = 300
 currentTime = pygame.time.get_ticks()
 
 mapFile = open("solidMap.txt", "r")
@@ -193,42 +209,57 @@ running = True
 while running:
     keyDown = pygame.key.get_pressed()
 
-    # This is the movement code for non-isometric movement
-    # if keyDown[pygame.K_w]:
-    #     playerCoords -= screenWorld(pygame.Vector3(0, 0.2 * dt, 0))
-    # if keyDown[pygame.K_a]:
-    #     playerCoords -= screenWorld(pygame.Vector3(0.2 * dt, 0, 0))
-    #     facing = "left"
-    # if keyDown[pygame.K_s]:
-    #     playerCoords += screenWorld(pygame.Vector3(0, 0.2 * dt, 0))
-    # if keyDown[pygame.K_d]:
-    #     playerCoords += screenWorld(pygame.Vector3(0.2 * dt, 0, 0))
-    #     facing = "right"
-    
+    if isometricMovement == True:
+            
     # This is the movement code for movement using the ingame grid system (isometric)
-
-    if keyDown[pygame.K_w]:
-        playerCoords.y -= 2 * dt
-        facing = "right"
-    if keyDown[pygame.K_a]:
-        playerCoords.x -= 2 * dt
-        facing = "left"
-    if keyDown[pygame.K_s]:
-        playerCoords.y += 2 * dt
-        facing = "left"
-    if keyDown[pygame.K_d]:
-        playerCoords.x += 2 * dt
-        facing = "right"
-
-    if keyDown[pygame.K_RIGHT]:
-        viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
-    if keyDown[pygame.K_LEFT]:
-        viewTransform += screenWorld(pygame.Vector3(1 * dt, 0, 0))
-    if keyDown[pygame.K_UP]:
-        viewTransform += screenWorld(pygame.Vector3(0, 1 * dt, 0))
-    if keyDown[pygame.K_DOWN]:
-        viewTransform -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
         
+        if keyDown[pygame.K_w]:
+            playerCoords.y -= movementSpeed * dt
+            facing = "right"
+        if keyDown[pygame.K_a]:
+            playerCoords.x -= movementSpeed * dt
+            facing = "left"
+        if keyDown[pygame.K_s]:
+            playerCoords.y += movementSpeed * dt
+            facing = "left"
+        if keyDown[pygame.K_d]:
+            playerCoords.x += movementSpeed * dt
+            facing = "right"
+        if keyDown[pygame.K_i]:
+            isometricMovement = not(isometricMovement)
+    else:
+    # This is the movement code for non-isometric movement
+
+        if keyDown[pygame.K_w]:
+            playerCoords -= screenWorld(pygame.Vector3(0, pixelMovement * dt, 0))
+        if keyDown[pygame.K_a]:
+            playerCoords -= screenWorld(pygame.Vector3(pixelMovement * dt, 0, 0))
+            facing = "left"
+        if keyDown[pygame.K_s]:
+            playerCoords += screenWorld(pygame.Vector3(0, pixelMovement * dt, 0))
+        if keyDown[pygame.K_d]:
+            playerCoords += screenWorld(pygame.Vector3(pixelMovement * dt, 0, 0))
+            facing = "right"
+        if keyDown[pygame.K_i]:
+            isometricMovement = not(isometricMovement)
+
+
+
+    # Original camera movement code, now it's centered on the player
+    # if keyDown[pygame.K_RIGHT]:
+    #     viewTransform -= screenWorld(pygame.Vector3(1 * dt, 0, 0))
+    # if keyDown[pygame.K_LEFT]:
+    #     viewTransform += screenWorld(pygame.Vector3(1 * dt, 0, 0))
+    # if keyDown[pygame.K_UP]:
+    #     viewTransform += screenWorld(pygame.Vector3(0, 1 * dt, 0))
+    # if keyDown[pygame.K_DOWN]:
+    #     viewTransform -= screenWorld(pygame.Vector3(0, 1 * dt, 0))
+        
+    viewTransform = playerCoords
+
+    if playerCoords.z <= -5:
+        playerCoords = pygame.Vector3(5, 5, 2)
+
     dt = clock.tick(60)/1000
 
     playerPhysicx()
