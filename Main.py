@@ -41,6 +41,7 @@ def drawWorld():
     #Bliting le player
     kornet.updateFrame()
     kornet.draw()
+    kornet.playerSounds()
 
     for i in range(len(tempList)):
         gameDisplay.blit(tileBlock(tempList[i]), worldScreen(tempList[i]))
@@ -291,6 +292,7 @@ class Hornet():
 
         if keyDown[self.up] or keyDown[self.left] or keyDown[self.down] or keyDown[self.right]:
             currentTime = pygame.time.get_ticks()
+            
             if currentTime - self.lastUpdate >= animationTick:
                 self.frameNum += 1
                 self.lastUpdate = currentTime
@@ -315,6 +317,22 @@ class Hornet():
                 # self.frame = pygame.transform.flip(self.frame, True, False)\
         else:
             self.frame = self.currentFrame
+        
+    def playerSounds(self):
+        global playerWalk, playerJump
+
+        if keyDown[self.up] or keyDown[self.left] or keyDown[self.down] or keyDown[self.right]:
+            playerWalk.unpause()
+        else:
+            playerWalk.pause()
+        
+        if self.jumpState == "landing" and self.coordinates.z == 0.01:
+            pygame.mixer.Sound.play(playerLand)
+        
+        if self.jumpState == "takeoff":
+            pygame.mixer.Sound.play(playerJump)
+
+
                     
 pygame.init()
 pygame.time.Clock()
@@ -385,6 +403,10 @@ animationTick = 130
 attackAnimationTick = 60
 currentTime = pygame.time.get_ticks()
 
+grassStep = pygame.mixer.Sound("hero_run_footsteps_grass.wav")
+playerLand = pygame.mixer.Sound("hero_land_soft.wav")
+playerJump = pygame.mixer.Sound("hero_jump.wav")
+
 mapFile = open("solidMap.txt", "r")
 mapData = []
 
@@ -399,10 +421,22 @@ for row in mapFile.read().split("\n"):
     i += 1
 
 # kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, True, pygame.K_x, pygame.K_z)
-# One player while I figure out how the layering works
+# Though two players are now possible with the class, I don't unfortunately have no idea how to do the rendering
 # cornet = Hornet(pygame.Vector3(5, 5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False)
 
 kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False, pygame.K_x, pygame.K_z)
+
+pygame.display.set_caption("Silksong?!")
+pygame.display.set_icon(cornetFALL)
+
+pygame.mixer.music.load("05. Greenpath.mp3")
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.25)
+
+playerWalk = grassStep.play(-1)
+playerWalk.pause()
+
+playerJump = None
 
 running = True
 while running:
@@ -413,6 +447,7 @@ while running:
 
     kornet.move()
     kornet.jump()
+
 
     # Original camera movement code, now it's centered on the player
     # if keyDown[pygame.K_RIGHT]:
