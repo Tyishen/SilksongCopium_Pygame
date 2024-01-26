@@ -137,8 +137,7 @@ All movement functions moved inside of the Hornet class
 
 def randomizeBocks():
     # tileBlock = random.choice([mossCobble, mossCobble2, mossCobble3, cobble])
-
-    return random.choice([mossCobble, mossCobble2, mossCobble3, cobble])
+    return random.choice([mossCobble, mossCobble, mossCobble2, mossCobble2, mossCobble3, mossCobble3, mossCobble4, mossCobble5, mossCobble5, cobble, cobble2, cobble3])
 
 def tileBlock(inputTile):
     
@@ -221,7 +220,21 @@ class Hornet():
                 self.facing = "right"
 
     def jump(self):
-        pass
+        if self.jumpState == "grounded":
+            if keyDown[self.jumpkey]:
+                print("Jump State: " + str(self.jumpState))
+                self.yVelocity = 7
+
+        if self.yVelocity >= 4:
+            self.jumpState = "takeoff"
+        if self.yVelocity < 4 and self.yVelocity > 1:
+            self.jumpState = "peak"    
+        if self.yVelocity <= 1:
+            self.jumpState = "airborne"
+        if self.yVelocity <= 1 and self.coordinates.z < 1:
+            self.jumpState = "landing"  
+        if self.yVelocity == 0 and self.coordinates.z < 0.05:
+            self.jumpState = "grounded"
 
     def attack(self):
 
@@ -249,20 +262,27 @@ class Hornet():
 
         tile = tileCoords(self.coordinates)
 
+        self.yVelocity += gravity * dt
+
         if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
-            self.coordinates.z -= gravity * dt
+            self.yVelocity += gravity * dt
         else:
             if mapData[int(tile.y)][int(tile.x)] == 1:
-                if self.coordinates.z > 0.0001 or self.coordinates.z < -0.5: # hackerman
-                    self.coordinates.z -= gravity * dt
+                if self.coordinates.z > 0.00001 or self.coordinates.z < -0.5: # hackerman
+                    self.yVelocity += gravity * dt
                 else:
-                    self.coordinates.z = 0.000001
+                    if not(self.jumpState == "takeoff"):
+                        self.yVelocity = 0
+                        self.coordinates.z = 0.000001
             else:
                 
-                self.coordinates.z -= gravity * dt
+                self.yVelocity += gravity * dt
             
-        if self.coordinates.z <= -5:
-            self.coordinates = pygame.Vector3(5, 5, 2)
+        self.coordinates.z += self.yVelocity * dt
+
+        if self.coordinates.z <= -7:
+            self.coordinates = pygame.Vector3(5, 5, 1)
+            self.yVelocity = 4
 
     def updateFrame(self):
         global currentTime, animationTick
@@ -282,10 +302,13 @@ class Hornet():
             self.currentFrame = cornetIDLE
 
         if self.jumpState == "takeoff":
-            self.frame = cornetATTACK
+            self.currentFrame = cornetATTACK
+
+        if self.jumpState == "peak" or self.jumpState == "landing":
+            self.currentFrame = cornetFALLPEAK
 
         if self.jumpState == "airborne":
-            self.frame = cornetFALL
+            self.currentFrame = cornetFALL
 
         if self.facing == "right":
                 self.frame = pygame.transform.flip(self.currentFrame, True, False)
@@ -321,14 +344,18 @@ dt = 0
 # isometricMovement = True
 # movementSpeed = 3
 # pixelMovement = worldScreen(pygame.Vector3(2, 0, 0)).length()
-gravity = 4.9
+gravity = -4.9
 
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
 
 mossCobble = pygame.image.load("mossCobble.png").convert_alpha()
 mossCobble2 = pygame.image.load("mossCobble2.png").convert_alpha()
 mossCobble3 = pygame.image.load("mossCobble3.png").convert_alpha()
+mossCobble4 = pygame.image.load("mossCobble4.png").convert_alpha()
+mossCobble5 = pygame.image.load("mossCobble5.png").convert_alpha()
 cobble = pygame.image.load("cobble.png").convert_alpha()
+cobble2 = pygame.image.load("cobble2.png").convert_alpha()
+cobble3 = pygame.image.load("cobble3.png").convert_alpha()
 
 blockTileList = []
 
@@ -337,6 +364,7 @@ blockTileList = []
 
 cornetIDLE = pygame.image.load("Cornet Idle.png").convert_alpha()
 cornetFALL = pygame.image.load("KornetFall.png").convert_alpha()
+cornetFALLPEAK = pygame.image.load("KornetFallPeak.png").convert_alpha()
 cornetATTACK = pygame.image.load("Kornet Walk 2.png").convert_alpha()
 
 cornet1 = pygame.image.load("cornet1.png").convert_alpha()
@@ -353,7 +381,7 @@ attack4 = pygame.image.load("attack4.png").convert_alpha()
 
 attackAni = [attack1, attack2, attack3, attack4]
 
-animationTick = 200
+animationTick = 130
 attackAnimationTick = 60
 currentTime = pygame.time.get_ticks()
 
@@ -374,7 +402,7 @@ for row in mapFile.read().split("\n"):
 # One player while I figure out how the layering works
 # cornet = Hornet(pygame.Vector3(5, 5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False)
 
-kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, True, pygame.K_x, pygame.K_z)
+kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False, pygame.K_x, pygame.K_z)
 
 running = True
 while running:
@@ -384,6 +412,7 @@ while running:
     mouseDown = pygame.mouse.get_pressed()
 
     kornet.move()
+    kornet.jump()
 
     # Original camera movement code, now it's centered on the player
     # if keyDown[pygame.K_RIGHT]:
