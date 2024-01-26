@@ -8,7 +8,6 @@ def drawWorld():
     global blockTileList, kornet
 
     gameDisplay.fill((255, 255, 255))
-    playerDisplay.fill((255, 255, 255))
 
     offsetVector = pygame.Vector2.normalize(pygame.Vector2(0.5, -0.5)) * 0.5
 
@@ -143,15 +142,15 @@ class Hornet():
 
     def __init__(self, coords, speed, up, left, down, right, iso):
         self.coordinates = coords
-        self.jumping = False
+        self.jumpState = "grounded"
         self.speed = speed
-        self.pixelSpeed = worldScreen(pygame.Vector3(speed - 1, 0, 0)).length()
+        self.pixelSpeed = worldScreen(pygame.Vector3(speed - 2, 0, 0)).length()
 
         self.facing = "left"
         self.isoMovement = iso
         self.frameNum = 0
         self.frame = cornetIDLE
-        self.frameState = "left"
+        self.currentFrame = cornetIDLE
         self.lastUpdate = pygame.time.get_ticks()
 
         self.up = up
@@ -227,13 +226,19 @@ class Hornet():
                     self.frameNum = 0
                 
                 self.frame = cornetAni[self.frameNum]
+                self.currentFrame = cornetAni[self.frameNum] # seems useless but it helps fix a visual issue with flipping
         
-        if self.jumping == True:
+        if self.jumpState == "takeoff":
+            self.frame = cornetATTACK
+
+        if self.jumpState == "airborne":
             self.frame = cornetFALL
 
-        if self.frameState != self.facing:
-            self.frame = pygame.transform.flip(self.frame, True, False)
-            self.frameState = self.facing
+        if self.facing == "right":
+                self.frame = pygame.transform.flip(self.currentFrame, True, False)
+                # self.frame = pygame.transform.flip(self.frame, True, False)\
+        else:
+            self.frame = self.currentFrame
                     
 pygame.init()
 pygame.time.Clock()
@@ -254,16 +259,15 @@ viewTransform = pygame.Vector3(10, 0, 0);
 
 outputScreen = pygame.display.set_mode((windowWidth, windowHeight))
 gameDisplay = pygame.Surface((300, 300))
-playerDisplay = pygame.Surface((300, 230))
 
 clock = pygame.time.Clock()
 dt = 0
 
 # Objects, moving most of this to class
 # playerCoords = pygame.Vector3(4.5, 4.5, 3)
-isometricMovement = True
-movementSpeed = 3
-pixelMovement = worldScreen(pygame.Vector3(2, 0, 0)).length()
+# isometricMovement = True
+# movementSpeed = 3
+# pixelMovement = worldScreen(pygame.Vector3(2, 0, 0)).length()
 gravity = 4.9
 
 debugBlock = pygame.image.load("pixil-frame-2.png").convert_alpha()
@@ -285,14 +289,11 @@ cornetATTACK = pygame.image.load("Kornet Walk 2.png").convert_alpha()
 cornet1 = pygame.image.load("cornet1.png").convert_alpha()
 cornet2 = pygame.image.load("Kornet Walk 1.png").convert_alpha()
 cornet3 = pygame.image.load("Kornet Walk 3.png").convert_alpha()
+cornet4 = pygame.image.load("Kornet Walk 4.png").convert_alpha()
 
-cornetAni = [cornet1, cornet2, cornet3]
+cornetAni = [cornet1, cornet2, cornet4, cornet3]
 
-facing = "left"
-
-frame = 0
-lastUpd = pygame.time.get_ticks()
-animationTick = 300
+animationTick = 200
 currentTime = pygame.time.get_ticks()
 
 mapFile = open("solidMap.txt", "r")
@@ -308,7 +309,7 @@ for row in mapFile.read().split("\n"):
     mapData.insert(i, rowArray)
     i += 1
 
-kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, True)
+kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, False)
 # One player while I figure out how the layering works
 # cornet = Hornet(pygame.Vector3(5, 5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False)
 
