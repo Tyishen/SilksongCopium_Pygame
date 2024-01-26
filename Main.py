@@ -18,7 +18,7 @@ def drawWorld():
 
     for y, row in enumerate(mapData):
         for x, tile in enumerate(row):
-            if tile == True:
+            if tile == 1:
                 sortingList.append(pygame.Vector3(x, y + 1, 0))
                 blockTileList.append(pygame.Vector3(x, y + 1, 0))
                 blockTileList.append(randomizeBocks())
@@ -44,6 +44,9 @@ def drawWorld():
 
     for i in range(len(tempList)):
         gameDisplay.blit(tileBlock(tempList[i]), worldScreen(tempList[i]))
+
+    kornet.attack()
+    kornet.drawSwing()
 
     outputScreen.blit(pygame.transform.scale(gameDisplay, outputScreen.get_size()), (0, 0))
 
@@ -81,48 +84,54 @@ def screenWorld(inputCoords):
 def tileCoords(inputCoords):
     return pygame.Vector2(numpy.floor(inputCoords.x), numpy.floor(inputCoords.y))
 
-# Player Movement
+# Player Movement 
 
-def playerPhysicx():
-    global playerCoords, dt, cornetYVelo, cornetJump
+"""
+All movement functions moved inside of the Hornet class
 
-    gravity = 4.9
 
-    tile = tileCoords(playerCoords)
+# def playerPhysicx():
+#     global playerCoords, dt, cornetYVelo, cornetJump
 
-    if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
-        playerCoords.z -= gravity * dt
-    else:
-        if mapData[int(tile.y)][int(tile.x)] == 1:
-            if playerCoords.z > 0.0001 or playerCoords.z < -0.5: # hackerman
-                playerCoords.z -= gravity * dt
-            else:
-                playerCoords.z = 0.000001
-        else:
+#     gravity = 4.9
+
+#     tile = tileCoords(playerCoords)
+
+#     if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
+#         playerCoords.z -= gravity * dt
+#     else:
+#         if mapData[int(tile.y)][int(tile.x)] == 1:
+#             if playerCoords.z > 0.0001 or playerCoords.z < -0.5: # hackerman
+#                 playerCoords.z -= gravity * dt
+#             else:
+#                 playerCoords.z = 0.000001
+#         else:
             
-            playerCoords.z -= gravity * dt
+#             playerCoords.z -= gravity * dt
 
-def kornetFrame(player):
-    global currentTime, frame, lastUpd
-    cornet = cornetIDLE
+# def kornetFrame(player):
+#     global currentTime, frame, lastUpd
+#     cornet = cornetIDLE
  
-    if True in keyDown:
-        currentTime = pygame.time.get_ticks()
-        if currentTime - lastUpd >= animationTick:
-            frame += 1
-            lastUpd = currentTime
-            if frame >= len(cornetAni):
-                frame = 0
+#     if True in keyDown:
+#         currentTime = pygame.time.get_ticks()
+#         if currentTime - lastUpd >= animationTick:
+#             frame += 1
+#             lastUpd = currentTime
+#             if frame >= len(cornetAni):
+#                 frame = 0
 
-        cornet = cornetAni[frame]
+#         cornet = cornetAni[frame]
 
-    if player.coordinates.z <= -0.5:
-        cornet = cornetFALL
+#     if player.coordinates.z <= -0.5:
+#         cornet = cornetFALL
 
-    if facing == "right":
-        cornet = pygame.transform.flip(cornet, True, False)
+#     if facing == "right":
+#         cornet = pygame.transform.flip(cornet, True, False)
 
-    return cornet
+#     return cornet
+
+"""
 
 # Randomizing the Map Look
 
@@ -140,9 +149,10 @@ def tileBlock(inputTile):
 # Ok we gonna try some object-oriented programming
 class Hornet():
 
-    def __init__(self, coords, speed, up, left, down, right, iso):
+    def __init__(self, coords, speed, up, left, down, right, iso, attack, jump):
         self.coordinates = coords
         self.jumpState = "grounded"
+        self.yVelocity = 0
         self.speed = speed
         self.pixelSpeed = worldScreen(pygame.Vector3(speed - 2, 0, 0)).length()
 
@@ -153,13 +163,30 @@ class Hornet():
         self.currentFrame = cornetIDLE
         self.lastUpdate = pygame.time.get_ticks()
 
+        self.attacking = False
+        self.attackFrameNum = 0
+        self.attackFrame = attack1
+        self.attackLastUpdate = pygame.time.get_ticks()
+        self.currentAttackFrame = attack1
+
         self.up = up
         self.left = left
         self.down = down
         self.right = right
+        self.attackKey = attack
+        self.jumpkey = jump
 
     def draw(self):
-        gameDisplay.blit(self.frame, worldScreen(self.coordinates) - pygame.Vector2(10, 10))
+        gameDisplay.blit(self.frame, worldScreen(self.coordinates) - pygame.Vector2(5, 5))
+
+    def drawSwing(self):
+        if self.attacking == True:
+            if self.facing == "right":
+                self.attackFrame = pygame.transform.flip(self.currentAttackFrame, True, False)
+                gameDisplay.blit(self.attackFrame, worldScreen(self.coordinates) - pygame.Vector2(6, 10))
+            else:
+                self.attackFrame = self.currentAttackFrame
+                gameDisplay.blit(self.attackFrame, worldScreen(self.coordinates) - pygame.Vector2(16, 10))
 
     def move(self):
         global keyDown
@@ -193,6 +220,31 @@ class Hornet():
                 self.coordinates += screenWorld(pygame.Vector3(self.pixelSpeed * dt, 0, 0))
                 self.facing = "right"
 
+    def jump(self):
+        pass
+
+    def attack(self):
+
+        if self.attacking == False:
+            if keyDown[self.attackKey]:
+                self.attacking = True
+        
+        if self.attacking == True:
+            
+            currentTime = pygame.time.get_ticks()
+            if currentTime - self.attackLastUpdate >= attackAnimationTick:
+                self.attackFrameNum += 1
+                self.attackLastUpdate = currentTime
+
+                if self.attackFrameNum >= len(attackAni):
+                    self.attackFrameNum = 0
+                    self.attacking = False
+                    
+                
+                self.currentAttackFrame = attackAni[self.attackFrameNum]
+            else:
+                return
+        
     def physics(self):
 
         tile = tileCoords(self.coordinates)
@@ -224,10 +276,11 @@ class Hornet():
                 self.lastUpdate = currentTime
                 if self.frameNum >= len(cornetAni):
                     self.frameNum = 0
-                
-                self.frame = cornetAni[self.frameNum]
+
                 self.currentFrame = cornetAni[self.frameNum] # seems useless but it helps fix a visual issue with flipping
-        
+        else:
+            self.currentFrame = cornetIDLE
+
         if self.jumpState == "takeoff":
             self.frame = cornetATTACK
 
@@ -293,7 +346,15 @@ cornet4 = pygame.image.load("Kornet Walk 4.png").convert_alpha()
 
 cornetAni = [cornet1, cornet2, cornet4, cornet3]
 
+attack1 = pygame.image.load("attack1.png").convert_alpha()
+attack2 = pygame.image.load("attack2.png").convert_alpha()
+attack3 = pygame.image.load("attack3.png").convert_alpha()
+attack4 = pygame.image.load("attack4.png").convert_alpha()
+
+attackAni = [attack1, attack2, attack3, attack4]
+
 animationTick = 200
+attackAnimationTick = 60
 currentTime = pygame.time.get_ticks()
 
 mapFile = open("solidMap.txt", "r")
@@ -309,13 +370,18 @@ for row in mapFile.read().split("\n"):
     mapData.insert(i, rowArray)
     i += 1
 
-kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, False)
+# kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, True, pygame.K_x, pygame.K_z)
 # One player while I figure out how the layering works
 # cornet = Hornet(pygame.Vector3(5, 5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, False)
 
+kornet = Hornet(pygame.Vector3(4.5, 4.5, 3), 3, pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT, True, pygame.K_x, pygame.K_z)
+
 running = True
 while running:
+
+    pygame.event.get()
     keyDown = pygame.key.get_pressed()
+    mouseDown = pygame.mouse.get_pressed()
 
     kornet.move()
 
