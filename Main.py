@@ -8,6 +8,7 @@ def drawWorld():
     global blockTileList, kornet
 
     gameDisplay.fill((255, 255, 255))
+    gameDisplay.blit(backgroundImg, (0, 0))
 
     offsetVector = pygame.Vector2.normalize(pygame.Vector2(0.5, -0.5)) * 0.5
 
@@ -405,6 +406,8 @@ cobble2 = pygame.image.load("Assets\World\cobble2.png").convert_alpha()
 cobble3 = pygame.image.load("Assets\World\cobble3.png").convert_alpha()
 
 blockTileList = []
+
+backgroundImg = pygame.image.load("Assets\World\MossBackground.png").convert_alpha()
 
 # There's probably a faster way of getting all these.. oh well
 # Probably should've consolidated this all into a spritesheet but idk how
