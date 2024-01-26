@@ -146,6 +146,12 @@ def tileBlock(inputTile):
         if inputTile == blockTileList[i * 2]:
             return blockTileList[(i * 2) + 1]
 
+def playSound(channel, sound):
+    if channel.get_busy():
+        return
+    else:
+        channel = sound.play()
+
 # Ok we gonna try some object-oriented programming
 class Hornet():
 
@@ -304,7 +310,7 @@ class Hornet():
             self.currentFrame = cornetIDLE
 
         if self.jumpState == "takeoff":
-            self.currentFrame = cornetATTACK
+            self.currentFrame = cornetSTANCE
 
         if self.jumpState == "peak" or self.jumpState == "landing":
             self.currentFrame = cornetFALLPEAK
@@ -319,22 +325,38 @@ class Hornet():
             self.frame = self.currentFrame
         
     def playerSounds(self):
-        global playerWalk, playerJump
+        global playerJumpChannel, playerAttackChannel
 
-        if keyDown[self.up] or keyDown[self.left] or keyDown[self.down] or keyDown[self.right]:
-            playerWalk.unpause()
+        tile = tileCoords(self.coordinates)
+
+        if self.jumpState == "grounded":
+            if keyDown[self.up] or keyDown[self.left] or keyDown[self.down] or keyDown[self.right]:
+                playerWalk.unpause()
+            else:
+                playerWalk.pause()
         else:
             playerWalk.pause()
         
-        if self.jumpState == "landing" and self.coordinates.z == 0.01:
-            pygame.mixer.Sound.play(playerLand)
+
+        if tile.x < 0 or tile.y < 0 or tile.x > len(mapData) - 1  or tile.y > len(mapData) - 1:
+            pass
+
+        else:
+            if mapData[int(tile.y)][int(tile.x)] == 1:
+                if self.jumpState == "landing" and self.coordinates.z >= 0.01 and self.yVelocity < 0:
+                    playSound(playerJumpChannel, playerLand)
         
         if self.jumpState == "takeoff":
-            pygame.mixer.Sound.play(playerJump)
+            playSound(playerJumpChannel, playerJump)
+        
+        if self.attacking:
+            playSound(playerAttackChannel, defaultSwing)
+
 
 
                     
 pygame.init()
+pygame.mixer.init()
 pygame.time.Clock()
 
 # Begin the variables!
@@ -383,7 +405,7 @@ blockTileList = []
 cornetIDLE = pygame.image.load("Cornet Idle.png").convert_alpha()
 cornetFALL = pygame.image.load("KornetFall.png").convert_alpha()
 cornetFALLPEAK = pygame.image.load("KornetFallPeak.png").convert_alpha()
-cornetATTACK = pygame.image.load("Kornet Walk 2.png").convert_alpha()
+cornetSTANCE = pygame.image.load("Kornet Walk 2.png").convert_alpha()
 
 cornet1 = pygame.image.load("cornet1.png").convert_alpha()
 cornet2 = pygame.image.load("Kornet Walk 1.png").convert_alpha()
@@ -399,13 +421,17 @@ attack4 = pygame.image.load("attack4.png").convert_alpha()
 
 attackAni = [attack1, attack2, attack3, attack4]
 
-animationTick = 130
+animationTick = 100
 attackAnimationTick = 60
 currentTime = pygame.time.get_ticks()
 
 grassStep = pygame.mixer.Sound("hero_run_footsteps_grass.wav")
 playerLand = pygame.mixer.Sound("hero_land_soft.wav")
 playerJump = pygame.mixer.Sound("hero_jump.wav")
+
+defaultSwing = pygame.mixer.Sound("sword_3.wav")
+# Didn't use the list cause it added some static... not sure why, but I can't fix it
+swingSounds = [pygame.mixer.Sound("sword_1.wav"), pygame.mixer.Sound("sword_2.wav"), pygame.mixer.Sound("sword_3.wav"), pygame.mixer.Sound("sword_4.wav"), pygame.mixer.Sound("sword_5.wav")]
 
 mapFile = open("solidMap.txt", "r")
 mapData = []
@@ -436,7 +462,8 @@ pygame.mixer.music.set_volume(0.25)
 playerWalk = grassStep.play(-1)
 playerWalk.pause()
 
-playerJump = None
+playerJumpChannel = pygame.mixer.Channel(1)
+playerAttackChannel = pygame.mixer.Channel(2)
 
 running = True
 while running:
