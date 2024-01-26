@@ -5,7 +5,7 @@ All music and Hollow Knight: Silksong characters belong to Team Cherry.
 
 Thank you to Kabinet0 for helping me understand isometric rendering (and making me add the character)
 
-Hornet currently moves relative to the screen, though this can be changed so that the character moves relative to the world around her.
+Hornet currently moves relative to the screen, though this can be changed so that the character moves relative to the world around her. Please ensure Python and Pygame are installed.
 
 Currently there are only 6 actions:
 
