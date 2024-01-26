@@ -176,16 +176,16 @@ class Hornet():
         self.jumpkey = jump
 
     def draw(self):
-        gameDisplay.blit(self.frame, worldScreen(self.coordinates) - pygame.Vector2(5, 5))
+        gameDisplay.blit(self.frame, worldScreen(self.coordinates) - pygame.Vector2(10, 10))
 
     def drawSwing(self):
         if self.attacking == True:
             if self.facing == "right":
                 self.attackFrame = pygame.transform.flip(self.currentAttackFrame, True, False)
-                gameDisplay.blit(self.attackFrame, worldScreen(self.coordinates) - pygame.Vector2(6, 10))
+                gameDisplay.blit(self.attackFrame, worldScreen(self.coordinates) - pygame.Vector2(10, 16))
             else:
                 self.attackFrame = self.currentAttackFrame
-                gameDisplay.blit(self.attackFrame, worldScreen(self.coordinates) - pygame.Vector2(16, 10))
+                gameDisplay.blit(self.attackFrame, worldScreen(self.coordinates) - pygame.Vector2(24, 14))
 
     def move(self):
         global keyDown
@@ -223,7 +223,7 @@ class Hornet():
         if self.jumpState == "grounded":
             if keyDown[self.jumpkey]:
                 print("Jump State: " + str(self.jumpState))
-                self.yVelocity = 7
+                self.yVelocity = 6
 
         if self.yVelocity >= 4:
             self.jumpState = "takeoff"
@@ -268,7 +268,7 @@ class Hornet():
             self.yVelocity += gravity * dt
         else:
             if mapData[int(tile.y)][int(tile.x)] == 1:
-                if self.coordinates.z > 0.00001 or self.coordinates.z < -0.5: # hackerman
+                if self.coordinates.z > 0.00001 or self.coordinates.z < -0.25: # hackerman
                     self.yVelocity += gravity * dt
                 else:
                     if not(self.jumpState == "takeoff"):
@@ -280,7 +280,7 @@ class Hornet():
             
         self.coordinates.z += self.yVelocity * dt
 
-        if self.coordinates.z <= -7:
+        if self.coordinates.z <= -6:
             self.coordinates = pygame.Vector3(5, 5, 1)
             self.yVelocity = 4
 
